@@ -35,10 +35,10 @@ const CartPage = () => {
                 <div className="grid" style={{ gridTemplateColumns: '2fr 1fr' }}>
                     <div>
                         {cartItems.map((item) => (
-                            <div key={item._id} className="glass" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '1rem', borderRadius: 'var(--radius-lg)' }}>
+                            <div key={item.id} className="glass" style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', marginBottom: '1rem', borderRadius: 'var(--radius-lg)' }}>
                                 <img src={getImageUrl(item.images?.[0])} alt={item.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} onError={e => { e.target.src = 'https://placehold.co/80?text=?'; }} />
                                 <div style={{ flex: 1 }}>
-                                    <Link to={`/product/${item._id}`} style={{ fontWeight: 'bold' }}>
+                                    <Link to={`/product/${item.id}`} style={{ fontWeight: 'bold' }}>
                                         {i18n.language === 'fr' ? item.name : (item.translations?.[i18n.language]?.name || item.name)}
                                     </Link>
                                     <p style={{ color: 'var(--color-text-light)' }}>R$ {item.price.toFixed(2)}</p>
@@ -55,7 +55,7 @@ const CartPage = () => {
                                     </select>
                                 </div>
                                 <button
-                                    onClick={() => removeFromCartHandler(item._id)}
+                                    onClick={() => removeFromCartHandler(item.id)}
                                     className="btn"
                                     style={{ color: 'var(--color-error)' }}
                                 >

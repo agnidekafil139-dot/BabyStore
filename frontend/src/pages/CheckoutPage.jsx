@@ -1,29 +1,61 @@
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { createOrder } from '../lib/api';
+import { clearCartItems } from '../slices/cartSlice';
 
 const CheckoutPage = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const cart = useSelector((state) => state.cart);
     const [isProcessing, setIsProcessing] = useState(false);
     const [pixData, setPixData] = useState(null);
+    const [error, setError] = useState(null);
 
     // Calculate prices
     const itemsPrice = cart.cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
 
     const handleCreatePixPayment = async () => {
         setIsProcessing(true);
-        // In real app, call your backend /api/orders then /api/payments/pix
-        // Mocking response for UI demonstration
-        setTimeout(() => {
-            setPixData({
-                qrCodeBase64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', // minimal 1x1 black pixel base64 
-                copyPasteCode: '00020101021126580014br.gov.bcb.pix0136test-pix-key-1234520400005303986540510.005802BR5911Baby Store6009Sao Paulo62070503***6304ED1A',
-            });
+        setError(null);
+
+        try {
+            // 1. Create the order in Supabase
+            const orderData = {
+                orderItems: cart.cartItems.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    qty: item.qty,
+                    price: item.price,
+                    image: item.images?.[0]
+                })),
+                totalPrice: itemsPrice,
+                paymentMethod: 'PIX',
+            };
+
+            const createdOrder = await createOrder(orderData);
+            console.log('Order created:', createdOrder);
+
+            // 2. Clear cart after successful order
+            dispatch(clearCartItems());
+
+            // 3. Generate (mock) PIX data
+            // In a real integration, this would come from a payment provider webhook or API call
+            setTimeout(() => {
+                setPixData({
+                    qrCodeBase64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+                    copyPasteCode: '00020101021126580014br.gov.bcb.pix0136test-pix-key-1234520400005303986540510.005802BR5911Baby Store6009Sao Paulo62070503***6304ED1A',
+                });
+                setIsProcessing(false);
+            }, 1000);
+
+        } catch (err) {
+            console.error('Checkout error:', err);
+            setError(err.message || 'Error processing order');
             setIsProcessing(false);
-        }, 1500);
+        }
     };
 
     return (
@@ -46,6 +78,12 @@ const CheckoutPage = () => {
                         <span style={{ color: 'var(--color-primary-dark)' }}>R$ {itemsPrice.toFixed(2)}</span>
                     </div>
 
+                    {error && (
+                        <div style={{ color: 'var(--color-error)', marginTop: '1rem', fontSize: '0.9rem' }}>
+                            {error}
+                        </div>
+                    )}
+
                     {!pixData ? (
                         <button
                             onClick={handleCreatePixPayment}
@@ -60,7 +98,6 @@ const CheckoutPage = () => {
                             <h3 style={{ color: 'var(--color-primary-dark)' }}>{t('pix_payment')}</h3>
                             <p style={{ color: 'var(--color-text-light)', fontSize: '0.9rem', marginTop: '0.5rem' }}>{t('scan_qr')}</p>
 
-                            {/* Dummy QR image, normally a real Base64 string from MercadoPago */}
                             <div className="pix-qr" style={{ background: '#fff', border: '1px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <img src={`data:image/png;base64,${pixData.qrCodeBase64}`} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                             </div>

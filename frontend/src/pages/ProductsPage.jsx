@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BASE_URL, getImageUrl } from '../constants';
+import { getImageUrl } from '../constants';
+import { fetchProducts, fetchCategories } from '../lib/api';
 
 const ProductsPage = () => {
     const { t } = useTranslation();
@@ -15,17 +16,12 @@ const ProductsPage = () => {
     const fetchData = useCallback(async () => {
         try {
             setLoading(true);
-            const [prodRes, catRes] = await Promise.all([
-                fetch(`${BASE_URL}/api/products`),
-                fetch(`${BASE_URL}/api/categories`),
+            const [productsData, catData] = await Promise.all([
+                fetchProducts(),
+                fetchCategories(),
             ]);
-            if (!prodRes.ok) throw new Error('Failed to fetch products');
-            const productsData = await prodRes.json();
-            setProducts(productsData);
-            if (catRes.ok) {
-                const catData = await catRes.json();
-                setCategories(catData);
-            }
+            setProducts(productsData || []);
+            setCategories(catData || []);
             setError(null);
         } catch (err) {
             setError(err.message);
@@ -43,7 +39,7 @@ const ProductsPage = () => {
     }, [fetchData]);
 
     const filtered = products.filter(p => {
-        const matchCat = selectedCategory ? p.category?._id === selectedCategory : true;
+        const matchCat = selectedCategory ? p.categories?.id === selectedCategory : true;
         const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
         return matchCat && matchSearch;
     });
@@ -101,15 +97,15 @@ const ProductsPage = () => {
                                 </button>
                             </li>
                             {categories.map(cat => (
-                                <li key={cat._id}>
+                                <li key={cat.id}>
                                     <button
-                                        onClick={() => setSelectedCategory(cat._id)}
+                                        onClick={() => setSelectedCategory(cat.id)}
                                         className="btn"
                                         style={{
                                             width: '100%',
                                             justifyContent: 'flex-start',
-                                            background: selectedCategory === cat._id ? 'var(--color-primary)' : 'transparent',
-                                            fontWeight: selectedCategory === cat._id ? '600' : '400',
+                                            background: selectedCategory === cat.id ? 'var(--color-primary)' : 'transparent',
+                                            fontWeight: selectedCategory === cat.id ? '600' : '400',
                                             padding: '0.6rem 1rem',
                                             borderRadius: 'var(--radius-md)',
                                         }}
@@ -134,7 +130,7 @@ const ProductsPage = () => {
                     ) : (
                         <div className="product-grid">
                             {filtered.map(product => (
-                                <ProductCard key={product._id} product={product} />
+                                <ProductCard key={product.id} product={product} />
                             ))}
                         </div>
                     )}
@@ -144,25 +140,13 @@ const ProductsPage = () => {
     );
 };
 
-// Inline ProductCard to avoid import issue (can be extracted later)
+// Inline ProductCard
 const ProductCard = ({ product }) => {
     const { t } = useTranslation();
-    const dispatch = useDispatchFromStore();
-
-    const addToCartHandler = () => {
-        const item = { ...product, qty: 1 };
-        const cartItems = JSON.parse(localStorage.getItem('cart') || '{}').cartItems || [];
-        const existing = cartItems.find(x => x._id === product._id);
-        const newItems = existing
-            ? cartItems.map(x => x._id === product._id ? { ...x, qty: x.qty + 1 } : x)
-            : [...cartItems, item];
-        localStorage.setItem('cart', JSON.stringify({ cartItems: newItems, paymentMethod: 'PIX' }));
-        window.dispatchEvent(new Event('cartUpdated'));
-    };
 
     return (
         <div className="product-card animate-fade-in">
-            <Link to={`/product/${product._id}`}>
+            <Link to={`/product/${product.id}`}>
                 <img
                     src={getImageUrl(product.images?.[0])}
                     alt={product.name}
@@ -170,19 +154,19 @@ const ProductCard = ({ product }) => {
                 />
             </Link>
             <div>
-                <Link to={`/product/${product._id}`}>
+                <Link to={`/product/${product.id}`}>
                     <h3 style={{ fontSize: 'var(--text-base)', marginBottom: '0.3rem', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                         {product.name}
                     </h3>
                 </Link>
                 <p style={{ color: 'var(--color-text-light)', fontSize: 'var(--text-xs)', marginBottom: '0.8rem' }}>
-                    {'⭐'.repeat(Math.round(product.rating || 4))} ({product.numReviews || 0} {t('reviews')})
+                    {'⭐'.repeat(Math.round(product.rating || 4))} ({product.num_reviews || 0} {t('reviews')})
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
                     <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-primary-dark)' }}>
                         R$ {product.price?.toFixed(2)}
                     </span>
-                    <Link to={`/product/${product._id}`} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                    <Link to={`/product/${product.id}`} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
                         {t('view')}
                     </Link>
                 </div>
@@ -190,10 +174,5 @@ const ProductCard = ({ product }) => {
         </div>
     );
 };
-
-// Helper to dispatch without importing store directly
-function useDispatchFromStore() {
-    return () => { };
-}
 
 export default ProductsPage;

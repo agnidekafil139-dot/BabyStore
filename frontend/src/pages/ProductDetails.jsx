@@ -3,7 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../slices/cartSlice';
-import { BASE_URL, getImageUrl } from '../constants';
+import { getImageUrl } from '../constants';
+import { fetchProductById } from '../lib/api';
 
 const ProductDetails = () => {
     const { id } = useParams();
@@ -16,20 +17,19 @@ const ProductDetails = () => {
     const [activeImg, setActiveImg] = useState(0);
 
     useEffect(() => {
-        const fetchProduct = async () => {
+        const loadProduct = async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`${BASE_URL}/api/products/${id}`);
-                if (!res.ok) throw new Error('Produit introuvable');
-                const data = await res.json();
+                const data = await fetchProductById(id);
                 setProduct(data);
             } catch (err) {
+                console.error('Error fetching product:', err);
                 setProduct(null);
             } finally {
                 setLoading(false);
             }
         };
-        fetchProduct();
+        loadProduct();
     }, [id]);
 
     const addToCartHandler = () => {
@@ -105,7 +105,7 @@ const ProductDetails = () => {
                 {/* Right: Details */}
                 <div>
                     <span style={{ background: 'var(--color-secondary)', padding: '0.3rem 0.8rem', borderRadius: 'var(--radius-full)', fontSize: 'var(--text-xs)', marginBottom: '1rem', display: 'inline-block' }}>
-                        {product.category ? t(`cat_${product.category.slug}`) : ''}
+                        {product.categories ? t(`cat_${product.categories.slug}`) : 'Bébé'}
                     </span>
                     <h1 style={{ fontSize: 'clamp(1.5rem, 2.5vw, 2rem)', marginBottom: '0.5rem', marginTop: '0.5rem' }}>
                         {i18n.language === 'fr' ? product.name : (product.translations?.[i18n.language]?.name || product.name)}
@@ -113,7 +113,7 @@ const ProductDetails = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                         <span>{'⭐'.repeat(Math.round(product.rating || 4))}</span>
                         <span style={{ color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
-                            {product.rating?.toFixed(1)} ({product.numReviews} {t('reviews')})
+                            {product.rating?.toFixed(1)} ({product.num_reviews} {t('reviews')})
                         </span>
                     </div>
 
@@ -129,15 +129,15 @@ const ProductDetails = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
                         <span style={{
                             width: '10px', height: '10px', borderRadius: '50%',
-                            background: product.countInStock > 0 ? '#4caf50' : '#f44336',
+                            background: product.count_in_stock > 0 ? '#4caf50' : '#f44336',
                             display: 'inline-block'
                         }}></span>
-                        <span style={{ fontSize: 'var(--text-sm)', color: product.countInStock > 0 ? '#4caf50' : '#f44336' }}>
-                            {product.countInStock > 0 ? `${t('in_stock')} (${product.countInStock} ${t('available')})` : t('out_of_stock')}
+                        <span style={{ fontSize: 'var(--text-sm)', color: product.count_in_stock > 0 ? '#4caf50' : '#f44336' }}>
+                            {product.count_in_stock > 0 ? `${t('in_stock')} (${product.count_in_stock} ${t('available')})` : t('out_of_stock')}
                         </span>
                     </div>
 
-                    {product.countInStock > 0 && (
+                    {product.count_in_stock > 0 && (
                         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <label style={{ fontWeight: 500 }}>{t('quantity')} :</label>
                             <select
@@ -146,7 +146,7 @@ const ProductDetails = () => {
                                 className="input-control"
                                 style={{ width: '80px' }}
                             >
-                                {[...Array(Math.min(product.countInStock, 10)).keys()].map(x => (
+                                {[...Array(Math.min(product.count_in_stock, 10)).keys()].map(x => (
                                     <option key={x + 1} value={x + 1}>{x + 1}</option>
                                 ))}
                             </select>
@@ -156,8 +156,8 @@ const ProductDetails = () => {
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                         <button
                             className="btn btn-primary"
-                            style={{ flex: 1, padding: '1rem', fontSize: '1rem', opacity: product.countInStock === 0 ? 0.5 : 1 }}
-                            disabled={product.countInStock === 0}
+                            style={{ flex: 1, padding: '1rem', fontSize: '1rem', opacity: product.count_in_stock === 0 ? 0.5 : 1 }}
+                            disabled={product.count_in_stock === 0}
                             onClick={addToCartHandler}
                         >
                             {added ? t('added') : t('add_to_cart')}

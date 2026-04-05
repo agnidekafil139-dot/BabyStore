@@ -1,16 +1,17 @@
+import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Link } from 'react-router-dom';
 import { LayoutDashboard, ShoppingBag, Users, Package, ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useGetAdminOverviewQuery } from '../../slices/adminApiSlice';
+import { fetchAdminOverview } from '../../lib/api';
 import Loader from '../../components/Loader';
 import Message from '../../components/Message';
 
 const StatCard = ({ title, value, color, icon }) => (
-    <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ background: color, padding: '1rem', borderRadius: 'var(--radius-md)', opacity: 0.15, position: 'absolute' }} />
-        <div style={{ fontSize: '2rem' }}>{icon}</div>
-        <div>
+    <div className="glass" style={{ padding: '1.5rem', borderRadius: 'var(--radius-lg)', display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
+        <div style={{ background: color, padding: '1rem', borderRadius: 'var(--radius-md)', opacity: 0.15, position: 'absolute', top: '1rem', left: '1rem', right: '1rem', bottom: '1rem', zIndex: 0 }} />
+        <div style={{ fontSize: '2rem', position: 'relative', zIndex: 1 }}>{icon}</div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
             <h3 style={{ color: 'var(--color-text-light)', fontSize: 'var(--text-sm)', marginBottom: '0.3rem' }}>{title}</h3>
             <p style={{ fontSize: 'var(--text-xl)', fontWeight: 'bold', color: 'var(--color-text)' }}>{value}</p>
         </div>
@@ -20,8 +21,27 @@ const StatCard = ({ title, value, color, icon }) => (
 const AdminDashboard = () => {
     const { t } = useTranslation();
     const { userInfo } = useSelector((state) => state.auth);
+    const [overview, setOverview] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const { data: overview, isLoading, error } = useGetAdminOverviewQuery();
+    useEffect(() => {
+        const loadOverview = async () => {
+            try {
+                setLoading(true);
+                const data = await fetchAdminOverview();
+                setOverview(data);
+            } catch (err) {
+                console.error('Error fetching admin overview:', err);
+                setError(err.message || 'Error fetching data');
+            } finally {
+                setLoading(false);
+            }
+        };
+        if (userInfo?.role === 'admin') {
+            loadOverview();
+        }
+    }, [userInfo]);
 
     if (!userInfo || userInfo.role !== 'admin') {
         return <Navigate to="/login" replace />;
@@ -77,10 +97,10 @@ const AdminDashboard = () => {
                         {t('overview')} <span style={{ fontSize: '0.9rem', fontWeight: 400, color: 'var(--color-text-light)' }}>— {t('hello_admin', { name: userInfo.name })}</span>
                     </h1>
 
-                    {isLoading ? (
+                    {loading ? (
                         <Loader />
                     ) : error ? (
-                        <Message variant="danger">{error?.data?.message || error.error}</Message>
+                        <Message variant="danger">{error}</Message>
                     ) : (
                         <>
                             {/* Stats Grid */}
@@ -127,13 +147,13 @@ const AdminDashboard = () => {
                                     </thead>
                                     <tbody>
                                         {overview.latestOrders.map((order) => (
-                                            <tr key={order._id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
-                                                <td style={{ padding: '1rem' }}>{order._id.substring(0, 10)}...</td>
-                                                <td style={{ padding: '1rem' }}>{order.user?.name || 'Unknown'}</td>
-                                                <td style={{ padding: '1rem' }}>{order.createdAt.substring(0, 10)}</td>
-                                                <td style={{ padding: '1rem' }}>R$ {order.totalPrice.toFixed(2)}</td>
+                                            <tr key={order.id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
+                                                <td style={{ padding: '1rem' }}>{order.id.substring(0, 10)}...</td>
+                                                <td style={{ padding: '1rem' }}>{order.profiles?.name || 'Unknown'}</td>
+                                                <td style={{ padding: '1rem' }}>{order.created_at.substring(0, 10)}</td>
+                                                <td style={{ padding: '1rem' }}>R$ {order.total_price.toFixed(2)}</td>
                                                 <td style={{ padding: '1rem' }}>
-                                                    {order.isPaid ? (
+                                                    {order.is_paid ? (
                                                         <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>{t('yes_pix')}</span>
                                                     ) : (
                                                         <span style={{ color: 'var(--color-error)' }}>{t('no')}</span>

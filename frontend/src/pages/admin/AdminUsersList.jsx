@@ -1,40 +1,70 @@
-import { useGetUsersQuery, useDeleteUserMutation, useUpdateUserMutation } from '../../slices/adminApiSlice';
+import { useState, useEffect } from 'react';
 import { Users, Trash2, Edit } from 'lucide-react';
-import { useState } from 'react';
+import { fetchUsers, deleteUserProfile, updateUserRole } from '../../lib/api';
+import Loader from '../../components/Loader';
+import Message from '../../components/Message';
 
 const AdminUsersList = () => {
-    const { data: users, isLoading, error, refetch } = useGetUsersQuery();
-    const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
-    const [updateUser, { isLoading: isUpdating }] = useUpdateUserMutation();
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const [editUserId, setEditUserId] = useState(null);
     const [editRole, setEditRole] = useState('');
 
+    const loadUsers = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchUsers();
+            setUsers(data || []);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching users:', err);
+            setError(err.message || 'Error loading users');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadUsers();
+    }, []);
+
     const deleteHandler = async (id) => {
         if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
             try {
-                await deleteUser(id).unwrap();
-                alert('Utilisateur supprimé');
-                refetch();
+                setIsDeleting(true);
+                await deleteUserProfile(id);
+                alert('Utilisateur supprimé (Profil)');
+                loadUsers();
             } catch (err) {
-                alert(err?.data?.message || err.error);
+                console.error('Error deleting user:', err);
+                alert(err.message || 'Error deleting user');
+            } finally {
+                setIsDeleting(false);
             }
         }
     };
 
     const updateRoleHandler = async (id) => {
         try {
-            await updateUser({ userId: id, role: editRole }).unwrap();
+            setIsUpdating(true);
+            await updateUserRole(id, editRole);
             alert('Rôle mis à jour avec succès');
             setEditUserId(null);
-            refetch();
+            loadUsers();
         } catch (err) {
-            alert(err?.data?.message || err.error);
+            console.error('Error updating role:', err);
+            alert(err.message || 'Error updating role');
+        } finally {
+            setIsUpdating(false);
         }
     };
 
-    if (isLoading) return <p style={{ textAlign: 'center', padding: '3rem' }}>Chargement...</p>;
-    if (error) return <p style={{ textAlign: 'center', padding: '3rem', color: 'red' }}>Erreur: {error?.data?.message || error.error}</p>;
+    if (loading) return <Loader />;
+    if (error) return <Message variant="danger">{error}</Message>;
 
     return (
         <div>
@@ -57,15 +87,15 @@ const AdminUsersList = () => {
                     </thead>
                     <tbody>
                         {users.map((user) => (
-                            <tr key={user._id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
-                                <td style={{ padding: '0.7rem 1rem' }}>{user._id.substring(0, 10)}...</td>
+                            <tr key={user.id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
+                                <td style={{ padding: '0.7rem 1rem' }}>{user.id.substring(0, 10)}...</td>
                                 <td style={{ padding: '0.7rem 1rem' }}>{user.name}</td>
                                 <td style={{ padding: '0.7rem 1rem' }}>
                                     <a href={`mailto:${user.email}`} style={{ color: 'var(--color-primary-dark)' }}>{user.email}</a>
                                 </td>
 
                                 <td style={{ padding: '0.7rem 1rem' }}>
-                                    {editUserId === user._id ? (
+                                    {editUserId === user.id ? (
                                         <select
                                             value={editRole}
                                             onChange={e => setEditRole(e.target.value)}
@@ -86,14 +116,14 @@ const AdminUsersList = () => {
 
                                 <td style={{ padding: '0.7rem 1rem' }}>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                        {editUserId === user._id ? (
+                                        {editUserId === user.id ? (
                                             <>
                                                 <button
-                                                    onClick={() => updateRoleHandler(user._id)}
+                                                    onClick={() => updateRoleHandler(user.id)}
                                                     disabled={isUpdating}
                                                     style={{ padding: '0.4rem 0.8rem', background: '#1a7a4a', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                                                 >
-                                                    ✓ Sauver
+                                                    ✓ {isUpdating ? '...' : 'Sauver'}
                                                 </button>
                                                 <button
                                                     onClick={() => setEditUserId(null)}
@@ -105,15 +135,17 @@ const AdminUsersList = () => {
                                         ) : (
                                             <>
                                                 <button
-                                                    onClick={() => { setEditUserId(user._id); setEditRole(user.role); }}
-                                                    style={{ padding: '0.4rem 0.8rem', background: 'var(--color-secondary)', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                                    onClick={() => { setEditUserId(user.id); setEditRole(user.role); }}
+                                                    className="btn btn-secondary"
+                                                    style={{ padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center' }}
                                                 >
                                                     <Edit size={14} />
                                                 </button>
                                                 <button
-                                                    onClick={() => deleteHandler(user._id)}
+                                                    onClick={() => deleteHandler(user.id)}
                                                     disabled={isDeleting || user.role === 'admin'}
-                                                    style={{ padding: '0.4rem 0.8rem', background: '#ffe4e4', color: '#c00', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                                                    className="btn"
+                                                    style={{ padding: '0.4rem 0.8rem', background: '#ffe4e4', color: '#c00', display: 'flex', alignItems: 'center' }}
                                                 >
                                                     <Trash2 size={14} />
                                                 </button>

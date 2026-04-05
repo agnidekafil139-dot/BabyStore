@@ -1,24 +1,51 @@
-import { useGetOrdersQuery, useDeliverOrderMutation } from '../../slices/adminApiSlice';
+import { useState, useEffect } from 'react';
 import { Package, Truck } from 'lucide-react';
+import { fetchOrders, markOrderDelivered } from '../../lib/api';
+import Loader from '../../components/Loader';
+import Message from '../../components/Message';
 
 const AdminOrdersList = () => {
-    const { data: orders, isLoading, error, refetch } = useGetOrdersQuery();
-    const [deliverOrder, { isLoading: isDelivering }] = useDeliverOrderMutation();
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [deliveringId, setDeliveringId] = useState(null);
+
+    const loadOrders = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchOrders();
+            setOrders(data || []);
+            setError(null);
+        } catch (err) {
+            console.error('Error fetching orders:', err);
+            setError(err.message || 'Error loading orders');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadOrders();
+    }, []);
 
     const deliverHandler = async (id) => {
         if (window.confirm('Marquer cette commande comme livrée ?')) {
             try {
-                await deliverOrder(id).unwrap();
+                setDeliveringId(id);
+                await markOrderDelivered(id);
                 alert('Commande marquée comme livrée');
-                refetch();
+                loadOrders();
             } catch (err) {
-                alert(err?.data?.message || err.error);
+                console.error('Error delivering order:', err);
+                alert(err.message || 'Error marking as delivered');
+            } finally {
+                setDeliveringId(null);
             }
         }
     };
 
-    if (isLoading) return <p style={{ textAlign: 'center', padding: '3rem' }}>Chargement...</p>;
-    if (error) return <p style={{ textAlign: 'center', padding: '3rem', color: 'red' }}>Erreur: {error?.data?.message || error.error}</p>;
+    if (loading) return <Loader />;
+    if (error) return <Message variant="danger">{error}</Message>;
 
     return (
         <div>
@@ -43,36 +70,36 @@ const AdminOrdersList = () => {
                     </thead>
                     <tbody>
                         {orders.map((order) => (
-                            <tr key={order._id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
-                                <td style={{ padding: '0.7rem 1rem' }}>{order._id.substring(0, 10)}...</td>
-                                <td style={{ padding: '0.7rem 1rem' }}>{order.user?.name || 'Inconnu'}</td>
-                                <td style={{ padding: '0.7rem 1rem' }}>{order.createdAt.substring(0, 10)}</td>
-                                <td style={{ padding: '0.7rem 1rem', fontWeight: 600 }}>R$ {order.totalPrice.toFixed(2)}</td>
+                            <tr key={order.id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
+                                <td style={{ padding: '0.7rem 1rem' }}>{order.id.substring(0, 10)}...</td>
+                                <td style={{ padding: '0.7rem 1rem' }}>{order.profiles?.name || 'Inconnu'}</td>
+                                <td style={{ padding: '0.7rem 1rem' }}>{order.created_at.substring(0, 10)}</td>
+                                <td style={{ padding: '0.7rem 1rem', fontWeight: 600 }}>R$ {order.total_price.toFixed(2)}</td>
                                 <td style={{ padding: '0.7rem 1rem' }}>
-                                    {order.isPaid ? (
+                                    {order.is_paid ? (
                                         <span style={{ color: '#1a7a4a', fontWeight: 'bold' }}>Oui</span>
                                     ) : (
                                         <span style={{ color: '#c00' }}>Non</span>
                                     )}
                                 </td>
                                 <td style={{ padding: '0.7rem 1rem' }}>
-                                    {order.isDelivered ? (
-                                        <span style={{ color: '#1a7a4a', fontWeight: 'bold' }}>{order.deliveredAt.substring(0, 10)}</span>
+                                    {order.is_delivered ? (
+                                        <span style={{ color: '#1a7a4a', fontWeight: 'bold' }}>{order.delivered_at?.substring(0, 10)}</span>
                                     ) : (
                                         <span style={{ color: '#c00' }}>Non</span>
                                     )}
                                 </td>
                                 <td style={{ padding: '0.7rem 1rem' }}>
-                                    {!order.isDelivered && (
+                                    {!order.is_delivered && (
                                         <button
-                                            onClick={() => deliverHandler(order._id)}
-                                            disabled={isDelivering}
+                                            onClick={() => deliverHandler(order.id)}
+                                            disabled={deliveringId === order.id}
+                                            className="btn btn-primary"
                                             style={{
-                                                padding: '0.4rem 0.8rem', background: 'var(--color-primary)', color: 'white',
-                                                border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem'
+                                                padding: '0.4rem 0.8rem', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem'
                                             }}
                                         >
-                                            <Truck size={14} /> Livrer
+                                            <Truck size={14} /> {deliveringId === order.id ? '...' : 'Livrer'}
                                         </button>
                                     )}
                                 </td>

@@ -3,7 +3,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setCredentials } from '../slices/authSlice';
 import { useTranslation } from 'react-i18next';
-import { BASE_URL } from '../constants';
+import { loginUser } from '../lib/api';
 
 const Login = () => {
     const { t } = useTranslation();
@@ -19,21 +19,12 @@ const Login = () => {
         setError('');
         setLoading(true);
         try {
-            const res = await fetch(`${BASE_URL}/api/users/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
-            const data = await res.json();
-            if (!res.ok) {
-                setError(data.message || t('login_error') || 'Login failed');
-                setLoading(false);
-                return;
-            }
-            dispatch(setCredentials(data));
-            navigate(data.role === 'admin' ? '/admin' : '/');
+            const userData = await loginUser(email, password);
+            dispatch(setCredentials(userData));
+            navigate(userData.role === 'admin' ? '/admin' : '/');
         } catch (err) {
-            setError(err.message || t('network_error') || 'Network error');
+            console.error('Login error:', err);
+            setError(err.message || t('login_error') || 'Echec de la connexion');
         } finally {
             setLoading(false);
         }
@@ -76,7 +67,7 @@ const Login = () => {
                     </button>
                 </form>
                 <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
-                    {t('new_user')} <a href="/register" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>{t('create_account')}</a>
+                    {t('new_user')} <a href="https://supabase.com/docs/auth/authenthication/auth/sign-up" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>{t('create_account')}</a>
                 </p>
             </div>
         </div>

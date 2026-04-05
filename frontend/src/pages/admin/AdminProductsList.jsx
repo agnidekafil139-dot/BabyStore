@@ -1,23 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
 import { Pencil, Trash2, Plus, AlertCircle } from 'lucide-react';
-import { BASE_URL, getImageUrl } from '../../constants';
+import { getImageUrl } from '../../constants';
+import { fetchProducts, createProduct, deleteProduct } from '../../lib/api';
 
 const AdminProductsList = () => {
-    const { userInfo } = useSelector((state) => state.auth);
+    const navigate = useNavigate();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [deletingId, setDeletingId] = useState(null);
     const [createLoading, setCreateLoading] = useState(false);
 
-    const fetchProducts = useCallback(async () => {
+    const loadProducts = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${BASE_URL}/api/products`);
-            const data = await res.json();
-            setProducts(data);
+            const data = await fetchProducts();
+            setProducts(data || []);
             setError('');
         } catch (err) {
             setError('Erreur lors du chargement des produits.');
@@ -26,29 +25,20 @@ const AdminProductsList = () => {
         }
     }, []);
 
-    useEffect(() => { fetchProducts(); }, [fetchProducts]);
+    useEffect(() => { loadProducts(); }, [loadProducts]);
 
     useEffect(() => {
-        const onFocus = () => fetchProducts();
+        const onFocus = () => loadProducts();
         window.addEventListener('focus', onFocus);
         return () => window.removeEventListener('focus', onFocus);
-    }, [fetchProducts]);
+    }, [loadProducts]);
 
     const createProductHandler = async () => {
         if (!window.confirm('Créer un nouveau produit (brouillon) ?')) return;
         try {
             setCreateLoading(true);
-            const res = await fetch(`${BASE_URL}/api/products`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-                body: JSON.stringify({}),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
-            window.location.href = `/admin/products/${data._id}/edit`;
+            const data = await createProduct();
+            navigate(`/admin/products/${data.id}/edit`);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -60,12 +50,8 @@ const AdminProductsList = () => {
         if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce produit ?')) return;
         try {
             setDeletingId(id);
-            const res = await fetch(`${BASE_URL}/api/products/${id}`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${userInfo.token}` },
-            });
-            if (!res.ok) throw new Error('Erreur de suppression');
-            setProducts(products.filter(p => p._id !== id));
+            await deleteProduct(id);
+            setProducts(products.filter(p => p.id !== id));
         } catch (err) {
             setError(err.message);
         } finally {
@@ -110,7 +96,7 @@ const AdminProductsList = () => {
                         </thead>
                         <tbody>
                             {products.map((product) => (
-                                <tr key={product._id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
+                                <tr key={product.id} style={{ borderBottom: '1px solid var(--color-secondary)' }}>
                                     <td style={{ padding: '0.7rem 1rem' }}>
                                         <img
                                             src={getImageUrl(product.images?.[0])}
@@ -121,32 +107,32 @@ const AdminProductsList = () => {
                                     </td>
                                     <td style={{ padding: '0.7rem 1rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{product.name}</td>
                                     <td style={{ padding: '0.7rem 1rem', fontWeight: 600, color: 'var(--color-primary-dark)' }}>R$ {product.price?.toFixed(2)}</td>
-                                    <td style={{ padding: '0.7rem 1rem' }}>{product.category?.name || '—'}</td>
+                                    <td style={{ padding: '0.7rem 1rem' }}>{product.categories?.name || '—'}</td>
                                     <td style={{ padding: '0.7rem 1rem' }}>
                                         <span style={{
-                                            background: product.countInStock > 0 ? '#e6f9f0' : '#ffe4e4',
-                                            color: product.countInStock > 0 ? '#1a7a4a' : '#c00',
+                                            background: product.count_in_stock > 0 ? '#e6f9f0' : '#ffe4e4',
+                                            color: product.count_in_stock > 0 ? '#1a7a4a' : '#c00',
                                             padding: '0.2rem 0.7rem', borderRadius: '999px', fontWeight: 600, fontSize: '0.8rem'
                                         }}>
-                                            {product.countInStock}
+                                            {product.count_in_stock}
                                         </span>
                                     </td>
                                     <td style={{ padding: '0.7rem 1rem' }}>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             <Link
-                                                to={`/admin/products/${product._id}/edit`}
+                                                to={`/admin/products/${product.id}/edit`}
                                                 className="btn"
                                                 style={{ padding: '0.4rem 0.8rem', background: 'var(--color-secondary)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}
                                             >
                                                 <Pencil size={14} /> Éditer
                                             </Link>
                                             <button
-                                                onClick={() => deleteProductHandler(product._id)}
-                                                disabled={deletingId === product._id}
+                                                onClick={() => deleteProductHandler(product.id)}
+                                                disabled={deletingId === product.id}
                                                 className="btn"
                                                 style={{ padding: '0.4rem 0.8rem', background: '#ffe4e4', color: '#c00', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem' }}
                                             >
-                                                <Trash2 size={14} /> {deletingId === product._id ? '...' : 'Suppr.'}
+                                                <Trash2 size={14} /> {deletingId === product.id ? '...' : 'Suppr.'}
                                             </button>
                                         </div>
                                     </td>

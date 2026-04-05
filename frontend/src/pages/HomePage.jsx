@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { BASE_URL, getImageUrl } from '../constants';
+import { getImageUrl } from '../constants';
+import { fetchProducts, fetchCategories } from '../lib/api';
 
 const CATEGORY_ICONS = {
     vetements: '👕',
@@ -21,19 +22,19 @@ const HomePage = () => {
         const load = async () => {
             try {
                 setLoading(true);
-                const [catRes, prodRes] = await Promise.all([
-                    fetch(`${BASE_URL}/api/categories`),
-                    fetch(`${BASE_URL}/api/products`),
+                const [cats, prods] = await Promise.all([
+                    fetchCategories(),
+                    fetchProducts(),
                 ]);
-                if (catRes.ok) setCategories(await catRes.json());
-                if (prodRes.ok) {
-                    const prods = await prodRes.json();
+                
+                setCategories(cats || []);
+                if (prods && prods.length > 0) {
                     // Take 6 random products as "featured"
                     const shuffled = [...prods].sort(() => Math.random() - 0.5).slice(0, 6);
                     setFeaturedProducts(shuffled);
                 }
             } catch (e) {
-                console.error(e);
+                console.error('Error loading homepage data:', e);
             } finally {
                 setLoading(false);
             }
@@ -73,7 +74,7 @@ const HomePage = () => {
                     ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '1.5rem' }}>
                             {categories.map(cat => (
-                                <Link key={cat._id} to={`/products?category=${cat._id}`} style={{ textDecoration: 'none' }}>
+                                <Link key={cat.id} to={`/products?category=${cat.id}`} style={{ textDecoration: 'none' }}>
                                     <div
                                         className="glass"
                                         style={{
@@ -114,8 +115,8 @@ const HomePage = () => {
                     ) : (
                         <div className="product-grid">
                             {featuredProducts.map(product => (
-                                <div key={product._id} className="product-card animate-fade-in">
-                                    <Link to={`/product/${product._id}`}>
+                                <div key={product.id} className="product-card animate-fade-in">
+                                    <Link to={`/product/${product.id}`}>
                                         <img
                                             src={getImageUrl(product.images?.[0])}
                                             alt={product.name}
@@ -124,21 +125,21 @@ const HomePage = () => {
                                     </Link>
                                     <div>
                                         <span style={{ background: 'var(--color-secondary)', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', fontSize: '0.7rem', display: 'inline-block', marginBottom: '0.5rem' }}>
-                                            {product.category ? t(`cat_${product.category.slug}`) : 'Bébé'}
+                                            {product.categories ? t(`cat_${product.categories.slug}`) : 'Bébé'}
                                         </span>
-                                        <Link to={`/product/${product._id}`}>
+                                        <Link to={`/product/${product.id}`}>
                                             <h3 style={{ fontSize: 'var(--text-base)', marginBottom: '0.3rem', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                                                 {i18n.language === 'fr' ? product.name : (product.translations?.[i18n.language]?.name || product.name)}
                                             </h3>
                                         </Link>
                                         <p style={{ color: 'var(--color-text-light)', fontSize: 'var(--text-xs)', marginBottom: '0.8rem' }}>
-                                            {'⭐'.repeat(Math.round(product.rating || 4))} ({product.numReviews || 0} {t('reviews')})
+                                            {'⭐'.repeat(Math.round(product.rating || 4))} ({product.num_reviews || 0} {t('reviews')})
                                         </p>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-primary-dark)' }}>
                                                 R$ {product.price?.toFixed(2)}
                                             </span>
-                                            <Link to={`/product/${product._id}`} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
+                                            <Link to={`/product/${product.id}`} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
                                                 {t('view')}
                                             </Link>
                                         </div>

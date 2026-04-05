@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { Save, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react';
-import { BASE_URL, getImageUrl } from '../../constants';
+import { getImageUrl } from '../../constants';
+import { fetchProductById, fetchCategories, updateProduct, uploadProductImage } from '../../lib/api';
 
 const TabButton = ({ active, onClick, children }) => (
     <button
         onClick={onClick}
+        type="button"
         style={{
             padding: '0.5rem 1rem', border: 'none', cursor: 'pointer',
             borderBottom: `3px solid ${active ? 'var(--color-primary-dark)' : 'transparent'}`,
@@ -21,10 +22,10 @@ const TabButton = ({ active, onClick, children }) => (
 
 const AdminProductEdit = () => {
     const { id } = useParams();
-    const { userInfo } = useSelector((state) => state.auth);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [categories, setCategories] = useState([]);
@@ -46,8 +47,8 @@ const AdminProductEdit = () => {
         setPrice(product.price ?? 0);
         setDescription(product.description || '');
         setImages((product.images || []).join(', '));
-        setCategory(product.category?._id || product.category || '');
-        setCountInStock(product.countInStock ?? 0);
+        setCategory(product.category_id || ''); // Supabase uses category_id
+        setCountInStock(product.count_in_stock ?? 0);
         setNameEn(product.translations?.en?.name || '');
         setDescEn(product.translations?.en?.description || '');
         setNamePor(product.translations?.por?.name || '');
@@ -58,15 +59,14 @@ const AdminProductEdit = () => {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [productRes, categoriesRes] = await Promise.all([
-                    fetch(`${BASE_URL}/api/products/${id}`),
-                    fetch(`${BASE_URL}/api/categories`)
+                const [product, cats] = await Promise.all([
+                    fetchProductById(id),
+                    fetchCategories()
                 ]);
-                const product = await productRes.json();
-                const cats = await categoriesRes.json();
-                setCategories(cats);
+                setCategories(cats || []);
                 applyProductToState(product);
             } catch (err) {
+                console.error('Error fetching data:', err);
                 setError('Impossible de charger le produit.');
             } finally {
                 setLoading(false);
@@ -80,34 +80,48 @@ const AdminProductEdit = () => {
         try {
             setSaving(true);
             setError('');
-            const res = await fetch(`${BASE_URL}/api/products/${id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-                body: JSON.stringify({
-                    name,
-                    price: Number(price),
-                    description,
-                    images: images.split(',').map(img => img.trim()).filter(Boolean),
-                    category,
-                    countInStock: Number(countInStock),
-                    translations: {
-                        en: { name: nameEn, description: descEn },
-                        por: { name: namePor, description: descPor }
-                    }
-                }),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message);
-            applyProductToState(data);
-            setSuccess('Produit mis à jour avec succès ! L’aperçu ci-dessous reflète les données enregistrées.');
+            
+            const productData = {
+                name,
+                price: Number(price),
+                description,
+                images: images.split(',').map(img => img.trim()).filter(Boolean),
+                category_id: category || null,
+                count_in_stock: Number(countInStock),
+                translations: {
+                    en: { name: nameEn, description: descEn },
+                    por: { name: namePor, description: descPor }
+                }
+            };
+
+            const updated = await updateProduct(id, productData);
+            applyProductToState(updated);
+            setSuccess('Produit mis à jour avec succès !');
             setTimeout(() => setSuccess(''), 4000);
         } catch (err) {
-            setError(err.message);
+            console.error('Update error:', err);
+            setError(err.message || 'Erreur lors de la mise à jour');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const uploadFileHandler = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            setUploading(true);
+            setError('');
+            const publicUrl = await uploadProductImage(file);
+            setImages(prev => prev ? `${prev}, ${publicUrl}` : publicUrl);
+            setSuccess('Image uploadée avec succès');
+            setTimeout(() => setSuccess(''), 3000);
+        } catch (err) {
+            console.error('Upload error:', err);
+            setError(err.message || 'Erreur lors de l’upload');
+        } finally {
+            setUploading(false);
         }
     };
 
@@ -135,12 +149,12 @@ const AdminProductEdit = () => {
             </div>
 
             {error && (
-                <div style={{ background: '#ffe4e4', color: '#c00', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ background: '#ffe4e4', color: '#c00', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
                     <AlertCircle size={18} /> {error}
                 </div>
             )}
             {success && (
-                <div style={{ background: '#e6f9f0', color: '#1a7a4a', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                <div style={{ background: '#e6f9f0', color: '#1a7a4a', padding: '1rem', borderRadius: 'var(--radius-md)', display: 'flex', gap: '0.5rem', marginBottom: '1rem', alignItems: 'center' }}>
                     <CheckCircle size={18} /> {success}
                 </div>
             )}
@@ -156,7 +170,7 @@ const AdminProductEdit = () => {
                             <select value={category} onChange={e => setCategory(e.target.value)} style={inputStyle} required>
                                 <option value="">-- Choisir une catégorie --</option>
                                 {categories.map(c => (
-                                    <option key={c._id} value={c._id}>{c.name}</option>
+                                    <option key={c.id} value={c.id}>{c.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -181,33 +195,12 @@ const AdminProductEdit = () => {
                                 style={{ ...inputStyle, resize: 'vertical', marginBottom: '0.5rem' }}
                             />
 
-                            <label style={labelStyle}>Ajouter une image depuis le PC</label>
+                            <label style={labelStyle}>{uploading ? 'Upload en cours...' : 'Ajouter une image depuis le PC'}</label>
                             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                                 <input
                                     type="file"
-                                    onChange={async (e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            const formData = new FormData();
-                                            formData.append('image', file);
-                                            try {
-                                                const res = await fetch(`${BASE_URL}/api/upload`, {
-                                                    method: 'POST',
-                                                    headers: { Authorization: `Bearer ${userInfo.token}` },
-                                                    body: formData,
-                                                });
-                                                const data = await res.json();
-                                                if (!res.ok) throw new Error(data.message);
-                                                const imageUrl = data.image.startsWith('http') ? data.image : `${BASE_URL}${data.image}`;
-                                                setImages(prev => prev ? `${prev}, ${imageUrl}` : imageUrl);
-                                                setSuccess('Image uploadée avec succès');
-                                                setTimeout(() => setSuccess(''), 3000);
-                                            } catch (err) {
-                                                setError(err.message || 'Erreur lors de l\'upload');
-                                                setTimeout(() => setError(''), 3000);
-                                            }
-                                        }
-                                    }}
+                                    onChange={uploadFileHandler}
+                                    disabled={uploading}
                                     style={{ ...inputStyle, padding: '0.5rem' }}
                                 />
                             </div>

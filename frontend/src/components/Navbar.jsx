@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { ShoppingCart, User, LogOut, Globe } from 'lucide-react';
 import { logout } from '../slices/authSlice';
 import { useTranslation } from 'react-i18next';
+import { logoutUser } from '../lib/api';
 
 const Navbar = () => {
     const { cartItems } = useSelector((state) => state.cart);
@@ -14,7 +15,12 @@ const Navbar = () => {
         i18n.changeLanguage(lng);
     };
 
-    const logoutHandler = () => {
+    const logoutHandler = async () => {
+        try {
+            await logoutUser();
+        } catch (err) {
+            console.error('Logout error:', err);
+        }
         dispatch(logout());
     };
 

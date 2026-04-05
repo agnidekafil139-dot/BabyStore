@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -12,8 +14,38 @@ import AdminOrdersList from './pages/admin/AdminOrdersList';
 import AdminUsersList from './pages/admin/AdminUsersList';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetails from './pages/ProductDetails';
+import { supabase } from './lib/supabase';
+import { fetchUserProfile } from './lib/api';
+import { setCredentials, logout } from './slices/authSlice';
 
 function App() {
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        // 1. Listen for auth changes (login, logout, session refresh)
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('Supabase Auth Event:', event);
+            if (session?.user) {
+                try {
+                    const profile = await fetchUserProfile(session.user.id);
+                    dispatch(setCredentials({
+                        id: session.user.id,
+                        email: session.user.email,
+                        name: profile.name,
+                        role: profile.role,
+                        avatar: profile.avatar,
+                    }));
+                } catch (err) {
+                    console.error('Error fetching profile on auth change:', err);
+                }
+            } else {
+                dispatch(logout());
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [dispatch]);
+
     return (
         <Router>
             <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
