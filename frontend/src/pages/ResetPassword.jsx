@@ -76,12 +76,12 @@ const ResetPassword = () => {
         return (
             <div className="container main-layout" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                 <div className="glass animate-fade-in" style={{ padding: '3rem', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
-                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔐</div>
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>✅</div>
                     <h2 style={{ marginBottom: '1rem', color: 'var(--color-primary-dark)' }}>
-                        Mot de passe mis à jour
+                        Félicitations ! 🎉
                     </h2>
                     <p style={{ color: 'var(--color-text-light)' }}>
-                        Votre mot de passe a été mis à jour avec succès.
+                        Votre mot de passe a été réinitialisé avec succès.
                     </p>
                     <p style={{ marginTop: '1rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
                         <a href="/login" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>
