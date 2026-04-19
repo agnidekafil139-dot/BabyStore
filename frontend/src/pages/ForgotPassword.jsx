@@ -16,7 +16,7 @@ const ForgotPassword = () => {
 
         try {
             const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/reset-password`,
+                redirectTo: 'https://baby-store-delta.vercel.app/reset-password',
             });
 
             if (resetError) throw resetError;
