@@ -66,8 +66,12 @@ const Login = () => {
                         {loading ? (t('loading') || 'Chargement...') : t('btn_login')}
                     </button>
                 </form>
-                <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
-                    {t('new_user')} <a href="https://supabase.com/docs/auth/authenthication/auth/sign-up" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>{t('create_account')}</a>
+                <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
+                    <a href="/forgot-password" style={{ color: 'var(--color-primary-dark)' }}>Mot de passe oublié ?</a>
+                </p>
+                <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
+                    {t('new_user')}{' '}
+                    <a href="/register" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>{t('create_account')}</a>
                 </p>
             </div>
         </div>
