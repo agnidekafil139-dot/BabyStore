@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
@@ -11,6 +11,31 @@ const ResetPassword = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [isValidToken, setIsValidToken] = useState(false);
+
+    useEffect(() => {
+        const checkSession = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                setIsValidToken(true);
+            } else {
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const accessToken = hashParams.get('access_token');
+                const refreshToken = hashParams.get('refresh_token');
+                
+                if (accessToken && refreshToken) {
+                    const { error } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken,
+                    });
+                    if (!error) {
+                        setIsValidToken(true);
+                    }
+                }
+            }
+        };
+        checkSession();
+    }, []);
 
     const submitHandler = async (e) => {
         e.preventDefault();
@@ -61,6 +86,27 @@ const ResetPassword = () => {
                     <p style={{ marginTop: '1rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
                         <a href="/login" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>
                             Se connecter
+                        </a>
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isValidToken) {
+        return (
+            <div className="container main-layout" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div className="glass animate-fade-in" style={{ padding: '3rem', borderRadius: 'var(--radius-lg)', width: '100%', maxWidth: '400px', textAlign: 'center' }}>
+                    <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>⚠️</div>
+                    <h2 style={{ marginBottom: '1rem', color: 'var(--color-primary-dark)' }}>
+                        Lien invalide
+                    </h2>
+                    <p style={{ color: 'var(--color-text-light)' }}>
+                        Ce lien de réinitialisation a expiré ou est invalide.
+                    </p>
+                    <p style={{ marginTop: '1.5rem' }}>
+                        <a href="/forgot-password" className="btn btn-primary">
+                            Demander un nouveau lien
                         </a>
                     </p>
                 </div>
