@@ -111,7 +111,7 @@ const ProductDetails = () => {
                         {i18n.language === 'fr' ? product.name : (product.translations?.[i18n.language]?.name || product.name)}
                     </h1>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                        <span>{'⭐'.repeat(Math.round(product.rating || 4))}</span>
+                        <span>{'⭐'.repeat(Math.round(product.rating || 0))}</span>
                         <span style={{ color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
                             {product.rating?.toFixed(1)} ({product.num_reviews} {t('reviews')})
                         </span>

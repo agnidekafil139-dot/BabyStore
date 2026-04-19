@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { setCredentials } from '../slices/authSlice';
 import { useTranslation } from 'react-i18next';
 import { loginUser } from '../lib/api';
@@ -13,6 +13,9 @@ const Login = () => {
     const [loading, setLoading] = useState(false);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const from = location.state?.from?.pathname || (email.includes('admin') ? '/admin' : '/');
 
     const submitHandler = async (e) => {
         e.preventDefault();
@@ -21,7 +24,8 @@ const Login = () => {
         try {
             const userData = await loginUser(email, password);
             dispatch(setCredentials(userData));
-            navigate(userData.role === 'admin' ? '/admin' : '/');
+            const redirect = new URLSearchParams(location.search).get('redirect');
+            navigate(redirect || (userData.role === 'admin' ? '/admin' : '/'), { replace: true });
         } catch (err) {
             console.error('Login error:', err);
             setError(err.message || t('login_error') || 'Echec de la connexion');
@@ -67,11 +71,11 @@ const Login = () => {
                     </button>
                 </form>
                 <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
-                    <a href="/forgot-password" style={{ color: 'var(--color-primary-dark)' }}>Mot de passe oublié ?</a>
+                    <Link to="/forgot-password" style={{ color: 'var(--color-primary-dark)' }}>Mot de passe oublié ?</Link>
                 </p>
                 <p style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--color-text-light)', fontSize: 'var(--text-sm)' }}>
                     {t('new_user')}{' '}
-                    <a href="/register" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>{t('create_account')}</a>
+                    <Link to="/register" style={{ color: 'var(--color-primary-dark)', fontWeight: 'bold' }}>{t('create_account')}</Link>
                 </p>
             </div>
         </div>

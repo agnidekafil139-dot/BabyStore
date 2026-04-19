@@ -101,7 +101,7 @@ const AdminUsersList = () => {
                                             onChange={e => setEditRole(e.target.value)}
                                             style={{ padding: '0.2rem', borderRadius: '4px' }}
                                         >
-                                            <option value="customer">Client (customer)</option>
+                                            <option value="user">Client (user)</option>
                                             <option value="admin">Admin</option>
                                         </select>
                                     ) : (

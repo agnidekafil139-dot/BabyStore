@@ -42,16 +42,7 @@ const Register = () => {
 
             if (signUpError) throw signUpError;
 
-            if (data.user) {
-                await supabase
-                    .from('profiles')
-                    .insert({
-                        id: data.user.id,
-                        name: name || email.split('@')[0],
-                        role: 'user',
-                    });
-            }
-
+            // Profile is created automatically by trigger on_auth_user_created
             setSuccess(true);
             setTimeout(() => {
                 navigate('/login');

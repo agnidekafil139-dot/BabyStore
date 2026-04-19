@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { getImageUrl } from '../constants';
 import { fetchProducts, fetchCategories } from '../lib/api';
+import ProductCard from '../components/ProductCard';
 
 const ProductsPage = () => {
     const { t } = useTranslation();
@@ -134,41 +135,6 @@ const ProductsPage = () => {
                             ))}
                         </div>
                     )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// Inline ProductCard
-const ProductCard = ({ product }) => {
-    const { t } = useTranslation();
-
-    return (
-        <div className="product-card animate-fade-in">
-            <Link to={`/product/${product.id}`}>
-                <img
-                    src={getImageUrl(product.images?.[0])}
-                    alt={product.name}
-                    onError={e => { e.target.src = 'https://placehold.co/300x250?text=No+Image'; }}
-                />
-            </Link>
-            <div>
-                <Link to={`/product/${product.id}`}>
-                    <h3 style={{ fontSize: 'var(--text-base)', marginBottom: '0.3rem', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-                        {product.name}
-                    </h3>
-                </Link>
-                <p style={{ color: 'var(--color-text-light)', fontSize: 'var(--text-xs)', marginBottom: '0.8rem' }}>
-                    {'⭐'.repeat(Math.round(product.rating || 4))} ({product.num_reviews || 0} {t('reviews')})
-                </p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--color-primary-dark)' }}>
-                        R$ {product.price?.toFixed(2)}
-                    </span>
-                    <Link to={`/product/${product.id}`} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}>
-                        {t('view')}
-                    </Link>
                 </div>
             </div>
         </div>

@@ -36,7 +36,7 @@ const Navbar = () => {
                         <Globe size={18} color="var(--color-text-light)" />
                         <select
                             onChange={(e) => changeLanguage(e.target.value)}
-                            defaultValue={i18n.language}
+                            value={i18n.language}
                             style={{ border: 'none', background: 'transparent', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', color: 'var(--color-text)' }}
                         >
                             <option value="fr">FR</option>
@@ -57,7 +57,9 @@ const Navbar = () => {
 
                     {userInfo ? (
                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                            <Link to="/profile" className="btn btn-primary" title={t('profile')}><User size={20} /></Link>
+                            <span style={{ color: 'var(--color-text-light)', fontSize: '0.9rem' }}>
+                                {userInfo.name || userInfo.email}
+                            </span>
                             {userInfo.role === 'admin' && (
                                 <Link to="/admin" className="btn" style={{ background: '#eee' }}>{t('admin')}</Link>
                             )}

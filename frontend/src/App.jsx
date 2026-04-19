@@ -11,6 +11,7 @@ import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminRoute from './components/AdminRoute';
 import AdminProductsList from './pages/admin/AdminProductsList';
 import AdminProductEdit from './pages/admin/AdminProductEdit';
 import AdminOrdersList from './pages/admin/AdminOrdersList';
@@ -71,11 +72,11 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                        <Route path="/admin/products" element={<ProtectedRoute><AdminProductsList /></ProtectedRoute>} />
-                        <Route path="/admin/products/:id/edit" element={<ProtectedRoute><AdminProductEdit /></ProtectedRoute>} />
-                        <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersList /></ProtectedRoute>} />
-                        <Route path="/admin/users" element={<ProtectedRoute><AdminUsersList /></ProtectedRoute>} />
+                        <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                        <Route path="/admin/products" element={<AdminRoute><AdminProductsList /></AdminRoute>} />
+                        <Route path="/admin/products/:id/edit" element={<AdminRoute><AdminProductEdit /></AdminRoute>} />
+                        <Route path="/admin/orders" element={<AdminRoute><AdminOrdersList /></AdminRoute>} />
+                        <Route path="/admin/users" element={<AdminRoute><AdminUsersList /></AdminRoute>} />
                     </Routes>
                 </main>
                 <Footer />
