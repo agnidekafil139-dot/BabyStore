@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -20,6 +20,13 @@ import ProductDetails from './pages/ProductDetails';
 import { supabase } from './lib/supabase';
 import { fetchUserProfile } from './lib/api';
 import { setCredentials, logout } from './slices/authSlice';
+
+const ProtectedRoute = ({ children }) => {
+    const { userInfo } = useSelector((state) => state.auth);
+    if (!userInfo) return <Navigate to="/login" replace />;
+    if (userInfo.role !== 'admin') return <Navigate to="/" replace />;
+    return children;
+};
 
 function App() {
     const dispatch = useDispatch();
@@ -64,11 +71,11 @@ function App() {
                         <Route path="/register" element={<Register />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/admin" element={<AdminDashboard />} />
-                        <Route path="/admin/products" element={<AdminProductsList />} />
-                        <Route path="/admin/products/:id/edit" element={<AdminProductEdit />} />
-                        <Route path="/admin/orders" element={<AdminOrdersList />} />
-                        <Route path="/admin/users" element={<AdminUsersList />} />
+                        <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                        <Route path="/admin/products" element={<ProtectedRoute><AdminProductsList /></ProtectedRoute>} />
+                        <Route path="/admin/products/:id/edit" element={<ProtectedRoute><AdminProductEdit /></ProtectedRoute>} />
+                        <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersList /></ProtectedRoute>} />
+                        <Route path="/admin/users" element={<ProtectedRoute><AdminUsersList /></ProtectedRoute>} />
                     </Routes>
                 </main>
                 <Footer />
