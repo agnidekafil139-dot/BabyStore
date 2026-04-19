@@ -9,6 +9,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProductsList from './pages/admin/AdminProductsList';
 import AdminProductEdit from './pages/admin/AdminProductEdit';
@@ -62,6 +63,7 @@ function App() {
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                         <Route path="/admin" element={<AdminDashboard />} />
                         <Route path="/admin/products" element={<AdminProductsList />} />
                         <Route path="/admin/products/:id/edit" element={<AdminProductEdit />} />
