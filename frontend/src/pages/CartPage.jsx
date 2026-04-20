@@ -47,7 +47,7 @@ const CartPage = () => {
                                     <select
                                         value={item.qty}
                                         onChange={(e) => addToCartHandler(item, Number(e.target.value))}
-                                        style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-error)' }}
+                                        style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-secondary)' }}
                                     >
                                         {[...Array(Math.min(item.count_in_stock || 10, 10)).keys()].map((x) => (
                                             <option key={x + 1} value={x + 1}>{x + 1}</option>

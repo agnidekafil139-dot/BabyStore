@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -22,13 +22,6 @@ import ProductDetails from './pages/ProductDetails';
 import { supabase } from './lib/supabase';
 import { fetchUserProfile } from './lib/api';
 import { setCredentials, logout } from './slices/authSlice';
-
-const ProtectedRoute = ({ children }) => {
-    const { userInfo } = useSelector((state) => state.auth);
-    if (!userInfo) return <Navigate to="/login" replace />;
-    if (userInfo.role !== 'admin') return <Navigate to="/" replace />;
-    return children;
-};
 
 function App() {
     const dispatch = useDispatch();

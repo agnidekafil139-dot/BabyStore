@@ -74,7 +74,7 @@ const AdminOrdersList = () => {
                                 <td style={{ padding: '0.7rem 1rem' }}>{order.id.substring(0, 10)}...</td>
                                 <td style={{ padding: '0.7rem 1rem' }}>{order.profiles?.name || 'Inconnu'}</td>
                                 <td style={{ padding: '0.7rem 1rem' }}>{order.created_at.substring(0, 10)}</td>
-                                <td style={{ padding: '0.7rem 1rem', fontWeight: 600 }}>R$ {order.total_price.toFixed(2)}</td>
+                                <td style={{ padding: '0.7rem 1rem', fontWeight: 600 }}>R$ {(order.total_price ?? 0).toFixed(2)}</td>
                                 <td style={{ padding: '0.7rem 1rem' }}>
                                     {order.is_paid ? (
                                         <span style={{ color: '#1a7a4a', fontWeight: 'bold' }}>Oui</span>

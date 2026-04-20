@@ -105,7 +105,7 @@ const AdminDashboard = () => {
                         <>
                             {/* Stats Grid */}
                             <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                                <StatCard icon="💰" title={t('total_sales')} value={`R$ ${overview.totalSales.toFixed(2)}`} color="#f9c6d0" />
+                                <StatCard icon="💰" title={t('total_sales')} value={`R$ ${(overview.totalSales ?? 0).toFixed(2)}`} color="#f9c6d0" />
                                 <StatCard icon="📦" title={t('total_orders')} value={overview.totalOrders} color="#c6e5fb" />
                                 <StatCard icon="🛍️" title={t('total_products')} value={overview.totalProducts} color="#c6f9d5" />
                                 <StatCard icon="👥" title={t('total_users')} value={overview.totalUsers} color="#f9edc6" />
@@ -151,7 +151,7 @@ const AdminDashboard = () => {
                                                 <td style={{ padding: '1rem' }}>{order.id.substring(0, 10)}...</td>
                                                 <td style={{ padding: '1rem' }}>{order.profiles?.name || 'Unknown'}</td>
                                                 <td style={{ padding: '1rem' }}>{order.created_at.substring(0, 10)}</td>
-                                                <td style={{ padding: '1rem' }}>R$ {order.total_price.toFixed(2)}</td>
+                                                <td style={{ padding: '1rem' }}>R$ {(order.total_price ?? 0).toFixed(2)}</td>
                                                 <td style={{ padding: '1rem' }}>
                                                     {order.is_paid ? (
                                                         <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>{t('yes_pix')}</span>

@@ -54,7 +54,7 @@ const ProductsPage = () => {
 
     if (error) return (
         <div className="container main-layout">
-            <div style={{ background: 'var(--color-error)', padding: '1.5rem', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ background: '#ffe4e4', color: '#c00', padding: '1.5rem', borderRadius: 'var(--radius-lg)' }}>
                 <p>Erreur: {error}</p>
             </div>
         </div>
