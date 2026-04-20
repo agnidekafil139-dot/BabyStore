@@ -47,7 +47,7 @@ const ProductDetails = () => {
 
     if (!product) return (
         <div className="container main-layout">
-            <div style={{ background: 'var(--color-error)', padding: '2rem', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
+            <div style={{ background: '#ffe4e4', color: '#c00', padding: '2rem', borderRadius: 'var(--radius-lg)', textAlign: 'center' }}>
                 <p>{t('product_not_found')}</p>
                 <Link to="/products" className="btn btn-secondary" style={{ marginTop: '1rem' }}>{t('back_catalog')}</Link>
             </div>

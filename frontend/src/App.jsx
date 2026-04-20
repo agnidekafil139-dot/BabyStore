@@ -12,6 +12,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminRoute from './components/AdminRoute';
+import AuthRoute from './components/AuthRoute';
 import AdminProductsList from './pages/admin/AdminProductsList';
 import AdminProductEdit from './pages/admin/AdminProductEdit';
 import AdminOrdersList from './pages/admin/AdminOrdersList';
@@ -67,7 +68,7 @@ function App() {
                         <Route path="/products" element={<ProductsPage />} />
                         <Route path="/product/:id" element={<ProductDetails />} />
                         <Route path="/cart" element={<CartPage />} />
-                        <Route path="/checkout" element={<CheckoutPage />} />
+                        <Route path="/checkout" element={<AuthRoute><CheckoutPage /></AuthRoute>} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/register" element={<Register />} />
                         <Route path="/forgot-password" element={<ForgotPassword />} />

@@ -41,7 +41,7 @@ const CartPage = () => {
                                     <Link to={`/product/${item.id}`} style={{ fontWeight: 'bold' }}>
                                         {i18n.language === 'fr' ? item.name : (item.translations?.[i18n.language]?.name || item.name)}
                                     </Link>
-                                    <p style={{ color: 'var(--color-text-light)' }}>R$ {item.price.toFixed(2)}</p>
+                                    <p style={{ color: 'var(--color-text-light)' }}>R$ {(item.price ?? 0).toFixed(2)}</p>
                                 </div>
                                 <div>
                                     <select
@@ -49,7 +49,7 @@ const CartPage = () => {
                                         onChange={(e) => addToCartHandler(item, Number(e.target.value))}
                                         style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-error)' }}
                                     >
-                                        {[...Array(10).keys()].map((x) => (
+                                        {[...Array(Math.min(item.count_in_stock || 10, 10)).keys()].map((x) => (
                                             <option key={x + 1} value={x + 1}>{x + 1}</option>
                                         ))}
                                     </select>
