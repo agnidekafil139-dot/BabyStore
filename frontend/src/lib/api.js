@@ -78,18 +78,33 @@ export async function loginUser(email, password) {
         email,
         password,
     });
-    if (authError) throw authError;
+    if (authError) {
+        console.error('Auth error:', authError);
+        throw authError;
+    }
 
     // Fetch profile to get role & name
-    const profile = await fetchUserProfile(authData.user.id);
-
-    return {
-        id: authData.user.id,
-        email: authData.user.email,
-        name: profile.name,
-        role: profile.role,
-        avatar: profile.avatar,
-    };
+    try {
+        const profile = await fetchUserProfile(authData.user.id);
+        return {
+            id: authData.user.id,
+            email: authData.user.email,
+            name: profile.name,
+            role: profile.role,
+            avatar: profile.avatar,
+        };
+    } catch (profileErr) {
+        console.error('Profile fetch error:', profileErr);
+        // Fallback si profil inexistant - créer un profil par défaut
+        console.warn('Creating fallback profile for user:', authData.user.id);
+        return {
+            id: authData.user.id,
+            email: authData.user.email,
+            name: '',
+            role: 'customer',
+            avatar: null,
+        };
+    }
 }
 
 export async function logoutUser() {

@@ -25,8 +25,15 @@ const Login = () => {
             const redirect = new URLSearchParams(location.search).get('redirect');
             navigate(redirect || (userData.role === 'admin' ? '/admin' : '/'), { replace: true });
         } catch (err) {
-            console.error('Login error:', err);
-            setError(err.message || t('login_error') || 'Echec de la connexion');
+            console.error('Login error full:', err);
+            // Afficher message d'erreur plus explicite
+            let msg = err.message || t('login_error') || 'Echec de la connexion';
+            if (msg.includes('Invalid login')) {
+                msg = 'Email ou mot de passe incorrect';
+            } else if (msg.includes('rate_limit')) {
+                msg = 'Trop de tentatives, réessayez plus tard';
+            }
+            setError(msg);
         } finally {
             setLoading(false);
         }
